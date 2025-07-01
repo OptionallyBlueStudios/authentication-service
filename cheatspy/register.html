@@ -6,77 +6,57 @@
 </head>
 <body>
   <h2>Register For CheatSpy Developer Program</h2>
-  <button id="generateBtn">Register</button>
+  <button id="generateBtn">Register To CheatSpy</button>
 
   <p><strong>Username:</strong> <span id="randomStr"></span></p>
   <p><strong>Password:</strong> <span id="hmacHex"></span></p>
 
   <script>
-    (function(){
-      const _0x5a7b=[
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789", //1
-        "getElementById",    //2
-        "random",            //3
-        "charAt",            //4
-        "length",            //5
-        "textContent",       //6
-        "subtle",            //7
-        "importKey",         //8
-        "sign",              //9
-        "HMAC",              //10
-        "SHA-384",           //11
-        "raw",               //12
-        "encode",            //13
-        "map",               //14
-        "toString",          //15
-        "padStart",          //16
-        "join",              //17
-        "addEventListener"   //18
-      ];
-      function _0x3f6d(_0x37a2,_0x3a4b){return _0x5a7b[_0x37a2 - 1];}
+    function getKey() {
+      const keyCharCodes = [85,70,68,89,79,73,53,52,54,48,57,56,85,69,70,126,64,63,83,65,71,62,70,68,116,111,104,106,101,64,126,102,58,100,115,75,71,39,59,111,105,117,54,56,121,51,57,56,103];
+      return String.fromCharCode(...keyCharCodes);
+    }
 
-      function generateRandomString(_0x3e52=0x40){
-        let _0x5d1e="";
-        for(let _0x4bd8=0; _0x4bd8 < _0x3e52; _0x4bd8++){
-          _0x5d1e += _0x3f6d(1).charAt(Math[_0x3f6d(3)]() * _0x3f6d(1).length);
-        }
-        return _0x5d1e;
+    function generateRandomString(length = 64) {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      let result = '';
+      for (let i = 0; i < length; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
       }
+      return result;
+    }
 
-      function bufferToHex(_0x46b1){
-        return [...new Uint8Array(_0x46b1)]
-          [_0x3f6d(14)](b => b[_0x3f6d(15)](0x10)[_0x3f6d(16)](2,"0"))
-          [_0x3f6d(17)]("");
-      }
+    function bufferToHex(buffer) {
+      return [...new Uint8Array(buffer)]
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+    }
 
-      async function hmacSha384(_0x22ca,_0x3ab4){
-        const _0x5d20 = new TextEncoder();
-        const _0x43f0 = _0x5d20[_0x3f6d(13)](_0x22ca);
-        const _0x38a4 = _0x5d20[_0x3f6d(13)](_0x3ab4);
+    async function hmacSha384(key, message) {
+      const encoder = new TextEncoder();
+      const keyData = encoder.encode(key);
+      const messageData = encoder.encode(message);
 
-        const _0x1652 = await crypto[_0x3f6d(7)][_0x3f6d(8)](
-          _0x3f6d(12), 
-          _0x43f0, 
-          {name:_0x3f6d(9), hash:_0x3f6d(10)}, 
-          false, 
-          [_0x3f6d(11)]
-        );
-
-        const _0x5811 = await crypto[_0x3f6d(7)][_0x3f6d(9)](_0x3f6d(9), _0x1652, _0x38a4);
-        return bufferToHex(_0x5811);
-      }
-
-      document[_0x3f6d(2)](_0x3f6d(18))[_0x3f6d(18)](
-        "click",
-        async () => {
-          const _0x401d = "UFDYOI546098UEF~@?SAG>FDtohje@~f:dsKG';oiu68y398g";
-          const _0x7c91 = generateRandomString(0x40);
-          const _0x42f1 = await hmacSha384(_0x401d, _0x7c91);
-          document[_0x3f6d(2)]("randomStr")[_0x3f6d(6)] = _0x7c91;
-          document[_0x3f6d(2)]("hmacHex")[_0x3f6d(6)] = _0x42f1;
-        }
+      const cryptoKey = await crypto.subtle.importKey(
+        'raw',
+        keyData,
+        { name: 'HMAC', hash: 'SHA-384' },
+        false,
+        ['sign']
       );
-    })();
+
+      const signature = await crypto.subtle.sign('HMAC', cryptoKey, messageData);
+      return bufferToHex(signature);
+    }
+
+    document.getElementById('generateBtn').addEventListener('click', async () => {
+      const key = getKey();
+      const randomStr = generateRandomString(64);
+      const hmacHex = await hmacSha384(key, randomStr);
+
+      document.getElementById('randomStr').textContent = randomStr;
+      document.getElementById('hmacHex').textContent = hmacHex;
+    });
   </script>
 </body>
 </html>
